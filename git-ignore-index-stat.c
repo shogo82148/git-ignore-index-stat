@@ -91,24 +91,15 @@ int main() {
         struct cache_entry *entry = (struct cache_entry*)ptr_entry;
         struct stat_data *stat_data = &(entry->ce_stat_data);
         struct stat file_st;
-        lstat(entry->name, &file_st);
-#if defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
-        stat_data->sd_ctime.sec = htonl(file_st.st_ctim.tv_sec);
-        stat_data->sd_ctime.nsec = htonl(file_st.st_ctim.tv_nsec);
-        stat_data->sd_mtime.sec = htonl(file_st.st_mtim.tv_sec);
-        stat_data->sd_mtime.nsec = htonl(file_st.st_mtim.tv_nsec);
-#else
-        stat_data->sd_ctime.sec = htonl(file_st.st_ctime);
-        stat_data->sd_ctime.nsec = 0;
-        stat_data->sd_mtime.sec = htonl(file_st.st_mtime);
-        stat_data->sd_mtime.nsec = 0;
-#endif
-        stat_data->sd_dev = htonl(file_st.st_dev);
-        stat_data->sd_ino = htonl(file_st.st_ino);
-        stat_data->sd_mode = htonl(file_st.st_mode);
-        stat_data->sd_uid = htonl(file_st.st_uid);
-        stat_data->sd_gid = htonl(file_st.st_gid);
-        stat_data->sd_size = htonl(file_st.st_size);
+        stat(entry->name, &file_st);
+        if (S_ISREG(file_st.st_mode)) {
+            stat_data->sd_ctime.sec = htonl(file_st.st_ctim.tv_sec);
+            stat_data->sd_ctime.nsec = htonl(file_st.st_ctim.tv_nsec);
+            stat_data->sd_mtime.sec = htonl(file_st.st_mtim.tv_sec);
+            stat_data->sd_mtime.nsec = htonl(file_st.st_mtim.tv_nsec);
+            stat_data->sd_dev = htonl(file_st.st_dev);
+            stat_data->sd_ino = htonl(file_st.st_ino);
+        }
         ptr_entry += (entry->name-ptr_entry+ntohs(entry->ce_namelen)+8)/8*8;
     }
 
