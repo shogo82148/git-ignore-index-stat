@@ -106,8 +106,8 @@ int main() {
 
     SHA_CTX c;
     SHA1_Init(&c);
-    SHA1_Update(&c, index, st.st_size);
-    SHA1_Final(index + st.st_size - 20,&c);
+    SHA1_Update(&c, index, st.st_size - 20);
+    SHA1_Final(index + st.st_size - 20, &c);
 
     munmap(index, st.st_size);
     close(fd);
