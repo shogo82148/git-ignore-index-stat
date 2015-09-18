@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <arpa/inet.h>
+#include <openssl/sha.h>
 
 
 // from https://github.com/git/git/blob/master/git-compat-util.h
@@ -77,8 +78,8 @@ int main() {
         return 1;
     }
 
-    char *index = (char*)mmap(NULL, st.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    char *ptr_entry = index + sizeof(struct cache_header);
+    unsigned char *index = (unsigned char*)mmap(NULL, st.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    unsigned char *ptr_entry = index + sizeof(struct cache_header);
     struct cache_header *header = (struct cache_header*)index;
 
     if (header->hdr_signature != htonl(CACHE_SIGNATURE)) {
@@ -100,8 +101,13 @@ int main() {
             stat_data->sd_dev = htonl(file_st.st_dev);
             stat_data->sd_ino = htonl(file_st.st_ino);
         }
-        ptr_entry += (entry->name-ptr_entry+ntohs(entry->ce_namelen)+8)/8*8;
+        ptr_entry += ((unsigned char*)entry->name-ptr_entry+ntohs(entry->ce_namelen)+8)/8*8;
     }
+
+    SHA_CTX c;
+    SHA1_Init(&c);
+    SHA1_Update(&c, index, st.st_size);
+    SHA1_Final(index + st.st_size - 20,&c);
 
     munmap(index, st.st_size);
     close(fd);
